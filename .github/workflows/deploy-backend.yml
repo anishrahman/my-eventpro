@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'eventpro/**'
-
+  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
