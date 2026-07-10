@@ -1,0 +1,40 @@
+name: Deploy Backend to Elastic Beanstalk
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'eventpro/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        working-directory: ./eventpro
+        run: mvn clean package -DskipTests
+
+      - name: Prepare deployment package (jar + Procfile)
+        working-directory: ./eventpro
+        run: zip -j deploy.zip target/eventpro-backend-0.0.1-SNAPSHOT.jar Procfile
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: spring-eventpro
+          environment_name: Spring-eventpro-env
+          version_label: "v-${{ github.sha }}"
+          region: ${{ secrets.AWS_REGION }}
+          deployment_package: eventpro/deploy.zip
